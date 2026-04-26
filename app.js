@@ -695,6 +695,39 @@ function escHtml(s) {
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ── Seed historical data (Apr 8–24) on first load ────────────────────────────
+function seedHistoricalData() {
+  const SEED_POSTS = {
+    '2026-04-08': { ig: 2, tk: 4 },
+    '2026-04-09': { ig: 5, tk: 3 },
+    '2026-04-10': { ig: 3, tk: 4 },
+    '2026-04-11': { ig: 3, tk: 4 },
+    '2026-04-12': { ig: 3, tk: 4 },
+    '2026-04-13': { ig: 2, tk: 1 },
+    '2026-04-14': { ig: 3, tk: 3 },
+    '2026-04-15': { ig: 3, tk: 2 },
+    '2026-04-16': { ig: 1, tk: 2 },
+    '2026-04-17': { ig: 0, tk: 0 },
+    '2026-04-18': { ig: 2, tk: 1 },
+    '2026-04-19': { ig: 1, tk: 2 },
+    '2026-04-20': { ig: 1, tk: 1 },
+    '2026-04-21': { ig: 2, tk: 2 },
+    '2026-04-22': { ig: 2, tk: 1 },
+    '2026-04-23': { ig: 2, tk: 2 },
+    '2026-04-24': { ig: 2, tk: 2 },
+  };
+  // Only seed if no posts exist yet
+  if (Object.keys(state.posts).length === 0) {
+    state.posts = SEED_POSTS;
+    // 75 posts históricos = 75 coins iniciales
+    state.coins      = 75;
+    state.totalCoins = 75;
+    state.badges     = ['p1', 'p49']; // Primer Paso + Semana Completa ya ganados
+    save();
+  }
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
+seedHistoricalData();
 checkSetup();
 renderAll();
