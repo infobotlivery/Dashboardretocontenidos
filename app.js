@@ -668,25 +668,7 @@ document.getElementById('rewards-grid').addEventListener('click', e => {
   renderHeader();
 });
 
-// ── Events: setup modal ───────────────────────────────────────────────────────
-function checkSetup() {
-  if (state.initialPosts === null) {
-    document.getElementById('setup-modal').classList.remove('hidden');
-  }
-}
-document.getElementById('setup-save').addEventListener('click', () => {
-  const ig  = parseInt(document.getElementById('init-ig').value) || 0;
-  const tk  = parseInt(document.getElementById('init-tk').value) || 0;
-  const igF = parseInt(document.getElementById('init-ig-followers').value) || 0;
-  const tkF = parseInt(document.getElementById('init-tk-followers').value) || 0;
-  state.initialPosts = { ig, tk };
-  if (igF > 0 || tkF > 0) {
-    state.followers.push({ date: today(), ig: igF, tk: tkF });
-  }
-  save();
-  document.getElementById('setup-modal').classList.add('hidden');
-  renderAll();
-});
+function checkSetup() { /* no-op: setup modal removed */ }
 
 // ── Util ──────────────────────────────────────────────────────────────────────
 function escHtml(s) {
@@ -716,15 +698,17 @@ function seedHistoricalData() {
     '2026-04-23': { ig: 2, tk: 2 },
     '2026-04-24': { ig: 2, tk: 2 },
   };
-  // Only seed if no posts exist yet
   if (Object.keys(state.posts).length === 0) {
-    state.posts = SEED_POSTS;
-    // 75 posts históricos = 75 coins iniciales
+    state.posts      = SEED_POSTS;
     state.coins      = 75;
     state.totalCoins = 75;
-    state.badges     = ['p1', 'p49']; // Primer Paso + Semana Completa ya ganados
-    save();
+    state.badges     = ['p1', 'p49'];
   }
+  // Always mark setup as done so modal never shows
+  if (state.initialPosts === null) {
+    state.initialPosts = { ig: 0, tk: 0 };
+  }
+  save();
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
