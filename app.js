@@ -60,10 +60,11 @@ const PROTOCOL_DAILY = [
 ];
 const PROTOCOL_EXTRA = {
   3: [ // Miércoles
-    { id: 'medir',   label: 'Medir (30 min) → ¿cuál fue el outlier?',                    mana: 1 },
-    { id: 'planear', label: 'Planear (30 min) → ¿qué replico? ¿qué itero? ¿qué experimento?', mana: 1 },
-    { id: 'grabar5', label: 'Grabar Nivel 5 (2h) → tutoriales con pantalla → editor',    mana: 1 },
-    { id: 'grabar3', label: 'Grabar Nivel 3 (1h) → videos dinámicos → editor',           mana: 1 },
+    { id: 'medir',   label: 'Medir (30 min) → ¿cuál fue el outlier?',                              mana: 1 },
+    { id: 'planear', label: 'Planear (30 min) → ¿qué replico? ¿qué itero? ¿qué experimento?',      mana: 1 },
+    { id: 'grabar5', label: 'Grabar Nivel 5 (2h) → tutoriales con pantalla → editor',              mana: 1 },
+    { id: 'grabar3', label: 'Grabar Nivel 3 (1h) → videos dinámicos → editor → agendar en buffer', mana: 1 },
+    { id: 'bloque4', label: 'Bloque 4h → grabar, lead magnets, carruseles de la semana y automatizaciones', mana: 1 },
   ],
   4: [{ id: 'recv4', label: 'Recibir 2 videos del editor cada día → agendar en buffer', mana: 1 }], // Jueves
   5: [ // Viernes
@@ -724,6 +725,35 @@ function escHtml(s) {
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ── Patch missing posts (apply always, idempotent) ───────────────────────────
+function patchPosts() {
+  // Posts Apr 26–27
+  const postPatches = {
+    '2026-04-26': { ig: 1, tk: 2 },
+    '2026-04-27': { ig: 2, tk: 2 },
+  };
+  let coinsAdded = 0;
+  for (const [date, data] of Object.entries(postPatches)) {
+    const existing = state.posts[date];
+    if (!existing || (existing.ig === 0 && existing.tk === 0)) {
+      state.posts[date] = data;
+      coinsAdded += data.ig + data.tk;
+    }
+  }
+  if (coinsAdded > 0) {
+    state.coins      += coinsAdded;
+    state.totalCoins += coinsAdded;
+  }
+
+  // Followers Apr 26: IG 377 + TK 79
+  const hasApr26Followers = state.followers.some(f => f.date === '2026-04-26');
+  if (!hasApr26Followers) {
+    state.followers.push({ date: '2026-04-26', ig: 377, tk: 79 });
+  }
+
+  save();
+}
+
 // ── Seed historical data (Apr 8–24) on first load ────────────────────────────
 function seedHistoricalData() {
   const SEED_POSTS = {
@@ -760,5 +790,6 @@ function seedHistoricalData() {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 seedHistoricalData();
+patchPosts();
 checkSetup();
 renderAll();
