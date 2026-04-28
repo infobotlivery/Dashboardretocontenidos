@@ -574,7 +574,43 @@ input:focus {
 }
 .protocol-mana-label { font-family: 'Orbitron', monospace; font-size: .62rem; color: var(--gold); white-space: nowrap; }
 
-.protocol-tasks { display: flex; flex-direction: column; gap: 6px; }
+.protocol-tasks { display: flex; flex-direction: column; gap: 10px; }
+
+/* Day block */
+.protocol-day {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.protocol-day.today { border-color: rgba(255,215,0,.35); }
+
+.protocol-day-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--bg3);
+}
+.protocol-day.today .protocol-day-hdr { background: rgba(255,215,0,.06); }
+
+.protocol-day-name {
+  font-family: 'Orbitron', monospace; font-size: .65rem;
+  font-weight: 700; letter-spacing: 2px; color: var(--muted2);
+}
+.protocol-day.today .protocol-day-name { color: var(--gold); }
+
+.protocol-day-count {
+  font-family: 'Orbitron', monospace; font-size: .65rem; color: var(--muted);
+}
+.protocol-day-count.full { color: var(--cyan); text-shadow: 0 0 6px var(--cyan-glow); }
+
+.protocol-task-group { padding: 4px 6px; display: flex; flex-direction: column; gap: 3px; }
+
+.protocol-subtask-label {
+  font-size: .58rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--muted); padding: 2px 4px;
+  font-family: 'Orbitron', monospace;
+}
+.protocol-subtask-label.accent { color: var(--gold); opacity: .7; }
+
 .protocol-section-label {
   font-size: .62rem; text-transform: uppercase; letter-spacing: 1.5px;
   color: var(--muted); margin-top: 4px;

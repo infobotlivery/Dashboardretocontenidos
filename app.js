@@ -52,26 +52,34 @@ const BADGE_DEFS = {
   ],
 };
 
-// Protocol tasks by day-of-week (0=Sun … 6=Sat)
+// Protocol tasks — exact tasks as defined
 const PROTOCOL_DAILY = [
   { id: 'pub',     label: 'Publicar 3 IG + 4 TT desde el buffer', mana: 1 },
   { id: 'stories', label: '3+ Stories (1 con CTA)',                mana: 1 },
-  { id: 'dms',     label: 'Responder DMs / comentarios',           mana: 1 },
+  { id: 'dms',     label: 'Responder DMs/comentarios con intención', mana: 1 },
 ];
 const PROTOCOL_EXTRA = {
-  3: [ // Wednesday
-    { id: 'medir',   label: '🎯 Medir (30 min) — ¿cuál fue el outlier?',     mana: 1 },
-    { id: 'planear', label: '🗂️ Planear (30 min) — ¿qué replico / itero?',   mana: 1 },
-    { id: 'grabar5', label: '🎬 Grabar Nivel 5 (2h) — tutoriales → editor',  mana: 1 },
-    { id: 'grabar3', label: '🎥 Grabar Nivel 3 (1h) — dinámicos → editor',   mana: 1 },
+  3: [ // Miércoles
+    { id: 'medir',   label: 'Medir (30 min) → ¿cuál fue el outlier?',                    mana: 1 },
+    { id: 'planear', label: 'Planear (30 min) → ¿qué replico? ¿qué itero? ¿qué experimento?', mana: 1 },
+    { id: 'grabar5', label: 'Grabar Nivel 5 (2h) → tutoriales con pantalla → editor',    mana: 1 },
+    { id: 'grabar3', label: 'Grabar Nivel 3 (1h) → videos dinámicos → editor',           mana: 1 },
   ],
-  4: [{ id: 'recv4', label: '📥 Recibir 2 videos del editor → buffer', mana: 1 }],
-  5: [
-    { id: 'recv5',   label: '📥 Recibir 2 videos del editor → buffer',   mana: 1 },
-    { id: 'podcast', label: '🎙️ Fake podcast → Opus Clip → editor',       mana: 1 },
-    { id: 'talking', label: '🎭 8-10 Talking heads → editar → buffer',    mana: 1 },
+  4: [{ id: 'recv4', label: 'Recibir 2 videos del editor cada día → agendar en buffer', mana: 1 }], // Jueves
+  5: [ // Viernes
+    { id: 'recv5',   label: 'Recibir 2 videos del editor cada día → agendar en buffer', mana: 1 },
+    { id: 'podcast', label: 'Fake podcast → editor (Opus Clip)',                         mana: 1 },
+    { id: 'talking', label: '8-10 Talking heads → tú editas → buffer',                  mana: 1 },
   ],
-  6: [{ id: 'recv6', label: '📥 Recibir 2 videos del editor → buffer', mana: 1 }],
+  6: [{ id: 'recv6', label: 'Recibir 2 videos del editor cada día → agendar en buffer', mana: 1 }], // Sábado
+};
+
+const DAY_LABELS = ['DOMINGO','LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO'];
+const DAY_EXTRA_LABEL = {
+  3: 'MIÉRCOLES',
+  4: 'JUEVES',
+  5: 'VIERNES',
+  6: 'SÁBADO',
 };
 
 // Total possible mana for each day-of-week
@@ -87,7 +95,11 @@ function getWeekTotal() {
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 function toKey(d) { return d.toISOString().slice(0, 10); }
-function today()  { return toKey(new Date()); }
+// Use LOCAL date so the counter resets at midnight local time (not UTC)
+function today() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 function formatDate(iso) { const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; }
 function getWeekKey(iso) {
   const d   = new Date(iso + 'T00:00:00');
@@ -428,38 +440,71 @@ function render14Days() {
 }
 
 function renderProtocol() {
-  const todayKey  = today();
-  const todayDone = state.protocol[todayKey] || [];
-  const tasks     = getTodayProtocolTasks();
+  const todayKey   = today();
   const weekMonKey = getWeekKey(todayKey);
+  const weekDates  = getWeekDates(weekMonKey);
   const { total: wTotal, done: wDone, pct: wPct } = getWeekProtocolStats(weekMonKey);
 
-  // Week % and bar
+  // Week bar
   document.getElementById('protocol-week-pct').textContent = wPct + '%';
   document.getElementById('protocol-mana-fill').style.width = Math.min(100, wPct) + '%';
   document.getElementById('protocol-mana-count').textContent = `${wDone}/${wTotal}`;
 
-  // Today's tasks
+  // Full week view (Mon → Sun)
   const container = document.getElementById('protocol-tasks');
   container.innerHTML = '';
 
-  const dailyLabel = document.createElement('div');
-  dailyLabel.className = 'protocol-section-label';
-  dailyLabel.textContent = 'Tareas diarias';
-  container.appendChild(dailyLabel);
+  // weekDates[0]=Mon … weekDates[6]=Sun
+  const weekDayLabels = ['LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO','DOMINGO'];
 
-  PROTOCOL_DAILY.forEach(task => renderProtocolTask(container, task, todayKey, todayDone));
+  weekDates.forEach((dateKey, i) => {
+    const dow      = new Date(dateKey + 'T00:00:00').getDay();
+    const isToday  = dateKey === todayKey;
+    const doneTasks = state.protocol[dateKey] || [];
+    const extra    = PROTOCOL_EXTRA[dow] || [];
+    const allTasks = [...PROTOCOL_DAILY, ...extra];
+    const dayDone  = doneTasks.filter(id => allTasks.find(t => t.id === id)).length;
 
-  const dow   = new Date().getDay();
-  const extra = PROTOCOL_EXTRA[dow] || [];
-  if (extra.length) {
-    const dayNames = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-    const label = document.createElement('div');
-    label.className = 'protocol-section-label';
-    label.textContent = `Tareas de ${dayNames[dow]}`;
-    container.appendChild(label);
-    extra.forEach(task => renderProtocolTask(container, task, todayKey, todayDone));
-  }
+    const section = document.createElement('div');
+    section.className = 'protocol-day' + (isToday ? ' today' : '');
+
+    // Day header
+    const hdr = document.createElement('div');
+    hdr.className = 'protocol-day-hdr';
+    hdr.innerHTML = `
+      <span class="protocol-day-name">${weekDayLabels[i]}</span>
+      <span class="protocol-day-count ${dayDone >= allTasks.length && allTasks.length > 0 ? 'full' : ''}">${dayDone}/${allTasks.length}</span>
+    `;
+    section.appendChild(hdr);
+
+    // TODOS LOS DÍAS group
+    const dailyGroup = document.createElement('div');
+    dailyGroup.className = 'protocol-task-group';
+    const dlabel = document.createElement('div');
+    dlabel.className = 'protocol-subtask-label';
+    dlabel.textContent = 'Todos los días';
+    dailyGroup.appendChild(dlabel);
+    PROTOCOL_DAILY.forEach(task => {
+      dailyGroup.appendChild(buildTaskEl(task, dateKey, doneTasks));
+    });
+    section.appendChild(dailyGroup);
+
+    // Day-specific group
+    if (extra.length) {
+      const extraGroup = document.createElement('div');
+      extraGroup.className = 'protocol-task-group';
+      const elabel = document.createElement('div');
+      elabel.className = 'protocol-subtask-label accent';
+      elabel.textContent = DAY_EXTRA_LABEL[dow] || weekDayLabels[i];
+      extraGroup.appendChild(elabel);
+      extra.forEach(task => {
+        extraGroup.appendChild(buildTaskEl(task, dateKey, doneTasks));
+      });
+      section.appendChild(extraGroup);
+    }
+
+    container.appendChild(section);
+  });
 
   // Week history (last 5 weeks)
   const histContainer = document.getElementById('protocol-history');
@@ -467,7 +512,7 @@ function renderProtocol() {
   const weeks = [];
   let d = new Date(todayKey + 'T00:00:00');
   for (let i = 0; i < 5; i++) {
-    const wKey = getWeekKey(toKey(d));
+    const wKey = getWeekKey(today_from(d));
     if (!weeks.includes(wKey)) weeks.push(wKey);
     d.setDate(d.getDate() - 7);
   }
@@ -485,19 +530,21 @@ function renderProtocol() {
   });
 }
 
-function renderProtocolTask(container, task, dateKey, done) {
-  const isDone = done.includes(task.id);
+function today_from(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function buildTaskEl(task, dateKey, doneTasks) {
+  const isDone = doneTasks.includes(task.id);
   const el = document.createElement('div');
   el.className = 'protocol-task' + (isDone ? ' done' : '');
-  el.dataset.id = task.id;
-  el.dataset.date = dateKey;
   el.innerHTML = `
     <div class="protocol-task-check">${isDone ? '✓' : ''}</div>
     <span class="protocol-task-label">${escHtml(task.label)}</span>
-    <span class="protocol-task-mana">+${task.mana} 💧</span>
+    <span class="protocol-task-mana">+${task.mana}💧</span>
   `;
   el.addEventListener('click', () => toggleProtocolTask(dateKey, task));
-  container.appendChild(el);
+  return el;
 }
 
 function toggleProtocolTask(dateKey, task) {
