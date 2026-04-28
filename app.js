@@ -71,6 +71,7 @@ const PROTOCOL_EXTRA = {
     { id: 'recv5',   label: 'Recibir 2 videos del editor cada día → agendar en buffer', mana: 1 },
     { id: 'podcast', label: 'Fake podcast → editor (Opus Clip)',                         mana: 1 },
     { id: 'talking', label: '8-10 Talking heads → tú editas → buffer',                  mana: 1 },
+    { id: 'agenda',  label: 'Agendar en borradores y activar alarmas para publicar',     mana: 1 },
   ],
   6: [{ id: 'recv6', label: 'Recibir 2 videos del editor cada día → agendar en buffer', mana: 1 }], // Sábado
 };
